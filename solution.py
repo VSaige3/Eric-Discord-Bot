@@ -36,13 +36,32 @@ async def count_down(ctx, n: int, msg):
 # ?is_parity 10 green --> parity must be "even" or "odd"
 # ?is_parity 10 odd --> no
 # ?is_parity 12 even --> yes
-
+@bot.command()
+async def is_parity(ctx, n: int, parity):
+    result = False
+    if parity == "even":
+        result = n % 2 == 0
+    elif parity == "odd":
+        result = n % 2 == 1
+    else:
+        await ctx.send("parity must be \"even\" or \"odd\"")
+        return
+    if result:
+        await ctx.send("yes")
+    else:
+        await ctx.send("no")
 
 # HW2: create a new command called "decay" which takes 2 numbers
 # until the first number reaches 0, wait a number of seconds equal to the second number, then divide the first number by 2
 # Send out the value of the first number each time you divide it
 # Note that the first number should be an integer, but the second should be a float
 # REMEMBER TO USE INTEGER DIVISION
+@bot.command()
+async def decay(ctx, a: int, b: float):
+    while a > 0:
+        a //= 2
+        await ctx.send(a)
+        await asyncio.sleep(b)
 
 @bot.command(description='For when you wanna settle the score some other way')
 async def choose(ctx, *choices: str):
