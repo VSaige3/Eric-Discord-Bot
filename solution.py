@@ -46,6 +46,7 @@ async def is_parity(ctx, n: int, parity):
     else:
         await ctx.send("parity must be \"even\" or \"odd\"")
         return
+    
     if result:
         await ctx.send("yes")
     else:

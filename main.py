@@ -11,8 +11,10 @@ intents.message_content = True
 bot = commands.Bot(command_prefix='?', description='description', intents=intents)
 
 # NOTE: to get this to run you must create a file called "key.txt" in this folder and put your token into it
-
-direction = "left"
+# bets = {}
+# { @Vu : [
+#   ([0], 100), ([1], 100)
+# ] }
 
 @bot.event
 async def on_ready():
@@ -29,20 +31,28 @@ async def count_down(ctx, n: int, msg):
         await m.edit(content=f"counting down from {n}")
     await m.edit(content=msg)
 
-# HW1: create a new command here named "is_parity" that takes 2 arguments: an integer and a string
-# If the string is not one of "even" or "odd", send a message to the effect that these are the only allowed values and stop
-# If the string is "even" and the integer is even, or the string is "odd" and the integer is odd, send the message "yes"
-# otherwise, send the message "no"; for example
-# ?is_parity 10 green --> parity must be "even" or "odd"
-# ?is_parity 10 odd --> no
-# ?is_parity 12 even --> yes
+# ?bet <type of bet> <amount of money>
+# ?info
+# ?roll
+def roll_roulette():
+    return random.randint(0, 36)
+
+@bot.group()
+async def bet(ctx):
+    pass
+
+@bet.command()
+async def single(ctx, n: int):
+    if n <= 36 and n >= 0:
+        roll = roll_roulette()
+        if roll == n:
+            await ctx.send("You won!")
+        else:
+            await ctx.send(f"Rolled a {roll}, you lost!")
+    else:
+        await ctx.send("Bet must be between 0 and 36")
 
 
-# HW2: create a new command called "decay" which takes 2 numbers
-# until the first number reaches 0, wait a number of seconds equal to the second number, then divide the first number by 2
-# Send out the value of the first number each time you divide it
-# Note that the first number should be an integer, but the second should be a float
-# REMEMBER TO USE INTEGER DIVISION
 
 @bot.command(description='For when you wanna settle the score some other way')
 async def choose(ctx, *choices: str):
