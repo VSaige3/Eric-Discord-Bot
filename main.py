@@ -52,7 +52,23 @@ async def single(ctx, n: int):
     else:
         await ctx.send("Bet must be between 0 and 36")
 
+@bet.command()
+async def pair(ctx, n: str):
+    if n == "even" or "odd":
+        roll = roll_roulette()
+        if roll == n:
+            await ctx.send("You won!")
+        else:
+            await ctx.send(f"Rolled a {roll}, you lost!")
+    else:
+        await ctx.send("Bet must be between 0 and 36")
 
+# HW: you are to write the "dozen" command
+# It should be in the group "bet" (look at the decorator on the pair commmand and single command)
+# This takes a number from 1-3, which determines the range the roulette result must be in to win
+# for 1, it must be in 1-12, 2 it must be 13-24, and 3 it must be 25-36
+# If the user enters a number outside this range, correct them
+# If the rolled number is in the correct range, they've won, otherwise they've lost
 
 @bot.command(description='For when you wanna settle the score some other way')
 async def choose(ctx, *choices: str):
