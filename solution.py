@@ -22,7 +22,7 @@ bot = commands.Bot(command_prefix='?', description='description', intents=intent
 
 class Bet:
     def __init__(self, winning_spaces, wager):
-        self.winning_spaces = winning_spaces
+        self.winning_spaces = winning_spaces 
         self.wager = wager
 
     def wins_on_roll(self, roll: int):
@@ -106,6 +106,7 @@ class BetManager:
                 profits[user] += profit
                 # change money
                 self.money[user] += winnings
+        # returns a dictionary with keys of type "discord.User" and values of type "int"
         return profits
     
     def clear_bets(self):
@@ -124,7 +125,7 @@ class BetManager:
         """
         Returns a list of bets a user has placed, or an empty list if they haven't placed any.
         """
-        # using the get method!!
+        # returns a list of Bet objects
         return self.bets.get(user, [])
 
 manager = BetManager(max_debt=100)
@@ -154,19 +155,25 @@ def roll_roulette():
 async def bet(ctx):
     pass
 
-# HW3.0: write the roll command. The part that rolls a random number has been provided, but you must use the
-# "manager.get_results_from_roll" method to apply the roll, and then clear the bets with "manager.clear_bets"
+# HW4.1: Modify this command so that the results of the bet are printed in a nicer way
+# It will be helpful to look at the get_results_from_roll method to get an idea of the output
+# Remember you can loop through the keys of a dictionary with a "for" loop
+# to get the name of a user, use ".display_name"
 @bot.command()
 async def roll(ctx):
+    """
+    Simulate a roll of the roulette table, then pay out accordingly and display results
+    """
     roll = roll_roulette()
     result = manager.get_results_from_roll(roll)
     manager.clear_bets()
     await ctx.send(f"Rolled a {roll}!")
-    await ctx.send(str(result)) # Not nice, but works for debugging
+    msg = "Profits & new balances:"
+    accounts = manager.get_accounts()
+    for user in result:
+        msg += f"\n{user.display_name} : {accounts[user]} ({+0:result[user]})"
+    await ctx.send(msg) # Not nice, but works for debugging (This is the line to replace with your nicer output)
 
-# HW3.1: This command should use the manager "get_accounts" method to get information about each person's account
-# and then print them to the chat in a nice manner (subjective). Remember you can use format strings
-# It may also help to print your messages using "print" in order to debug them
 @bot.command()
 async def balances(ctx):
     """
@@ -178,8 +185,22 @@ async def balances(ctx):
         msg += f"\t{user.display_name}: {accounts[user]} points\n"
     await ctx.send(msg)
 
-# HW3.2: I've begun this command for you. This should use the "add_user" feature of our manager to register a new user
-# If registration fails, print out a message informing them that it failed. To get the current user, use ctx.author
+# HW4.2: write the command "bets" to display the currently placed bets for this user
+# I've started it such that it gets a list of Bet objects, but it needs to be printed nicely as a message
+@bot.command(name="bets") # to avoid conflict with variables called "bets", not needed
+async def _bets(ctx):
+    """
+    Print the bets taken out
+    """
+    bets = manager.get_bets(ctx.author)
+    msg = f"{ctx.author.display_name}'s bets:"
+    if bets: # Check that we have placed bets
+        for bet in bets:
+            msg += f"\n${bet.get_wager()} on {str(bet.winning_spaces)}"
+    else: # If we have no placed bets, print a special message
+        msg = "No bets placed!"
+    await ctx.send(msg)
+
 @bot.command()
 async def register(ctx):
     """
@@ -190,9 +211,6 @@ async def register(ctx):
     else:
         await ctx.send("Could not add user!")
 
-# LOOK HERE: I've modified this function so that it uses our new bet interface
-# HW3.3 is to modify one of the other commands to use our new interface
-# Note how I've had to add a new parameter for the wager
 @bet.command()
 async def dozen(ctx, doz: int, wager: int):
     winning_range = []
@@ -213,7 +231,6 @@ async def dozen(ctx, doz: int, wager: int):
     else:
         await ctx.send("Invalid bet!")
 
-# This is the one I've chosen to modify
 @bet.command()
 async def pair(ctx, n: str, wager: int):
     winning_range = []
@@ -231,33 +248,34 @@ async def pair(ctx, n: str, wager: int):
         await ctx.send("Invalid bet!")
 
 @bet.command()
-async def single(ctx, n: int):
+async def single(ctx, n: int, wager: int):
     if n <= 36 and n >= 0:
-        roll = roll_roulette()
-        if roll == n:
-            await ctx.send("You won!")
+        winning_range = [n]
+        user = ctx.author
+        if manager.place_bet(user, wager, winning_range):
+            await ctx.send("Bet placed!")
         else:
-            await ctx.send(f"Rolled a {roll}, you lost!")
+            await ctx.send("Invalid bet!")
     else:
         await ctx.send("Bet must be between 0 and 36")
 
 @bet.command()
-async def red(ctx):
+async def red(ctx, wager: int):
     red_set = [1, 3, 5, 7, 9, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]
-    roll = roll_roulette() # run the table
-    if roll in red_set:
-        await ctx.send(f"Rolled a {roll}, you won!")
-    else: # otherwise, lose
-        await ctx.send(f"Rolled a {roll}, you lost!")
+    user = ctx.author
+    if manager.place_bet(user, wager, red_set):
+        await ctx.send("Bet placed!")
+    else:
+        await ctx.send("Invalid bet!")
 
 @bet.command()
-async def black(ctx):
+async def black(ctx, wager: int):
     black_set = [2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35]
-    roll = roll_roulette() # run the table
-    if roll in black_set:
-        await ctx.send(f"Rolled a {roll}, you won!")
-    else: # otherwise, lose
-        await ctx.send(f"Rolled a {roll}, you lost!")
+    user = ctx.author
+    if manager.place_bet(user, wager, black_set):
+        await ctx.send("Bet placed!")
+    else:
+        await ctx.send("Invalid bet!")
 
 keyfile = open("key.txt")
 token = keyfile.read()
